@@ -337,16 +337,6 @@ Claims sind die **tatsächlichen Daten** im JWT-Payload. Ein Scope bestimmt, wel
 
 </div>
 
-<div v-click class="mt-5 text-sm">
-
-```json
-// ID Token Payload (dekodiert)
-{ "sub": "user-123", "email": "max@example.com", "name": "Max Mustermann",
-  "iss": "https://keycloak/realm", "aud": "my-app", "exp": 1710000000 }
-```
-
-</div>
-
 
 ---
 
@@ -383,7 +373,9 @@ RS256( base64url(header) + "." + base64url(payload), privateKey )
 
 ### Validierung ohne Roundtrip
 
-Der Resource Server prüft die Signatur mit dem **Public Key des IdP** (via JWKS Endpoint) - ganz ohne Keycloak zu kontaktieren.
+Der Resource Server prüft die Signatur mit dem **Public Key des IdP** (via JWKS Endpoint).
+<br>
+<br>JWKS Endpoint muss nur <b>einmal</b> aufgerufen werden!
 
 <div class="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
 ⚠️ JWTs sind nur <strong>Base64url-kodiert</strong>, nicht verschlüsselt.<br>
@@ -416,7 +408,7 @@ layout: section
 
 Der **Authorization Code Flow** ist der empfohlene OAuth 2.0 Flow für alle Clients, die einen Nutzer authentifizieren müssen.
 
-**Kernprinzip:** Die App bekommt nie direkt ein Token - stattdessen erst einen kurzlebigen **Authorization Code**, der dann gegen Tokens eingetauscht wird.
+Die App bekommt nie direkt ein Token, stattdessen erst einen kurzlebigen **Authorization Code**, der dann gegen Tokens eingetauscht wird.
 
 <div class="grid grid-cols-2 gap-4 mt-6">
   <div class="rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">
@@ -459,7 +451,7 @@ sequenceDiagram
 - Zufälliger Wert, den die SPA vor dem Redirect generiert
 - Wird mit dem Authorization Request mitgeschickt
 - Kommt im Callback **unverändert zurück**
-- SPA prüft: stimmt der Wert überein?
+- SPA prüft ob der Wert übereinstimmt
 
 ```
 GET /authorize?...&state=xK3p9zQ2
@@ -651,14 +643,14 @@ Host: keycloak.example.com
 <div>
 
 - `scope=openid` - aktiviert OIDC (ohne diesen Parameter: reines OAuth 2.0)
-- <span style="color:#c2410c;font-weight:600">state</span> - zufälliger Wert, kommt in Schritt 2 zurück (CSRF-Schutz)
-- <span style="color:#7c3aed;font-weight:600">nonce</span> - zufälliger Wert, taucht im ID Token wieder auf (Replay-Schutz)
+- <span style="color:#c2410c;font-weight:600">state</span>: zufälliger Wert, kommt in Schritt 2 zurück (CSRF-Schutz)
+- <span style="color:#7c3aed;font-weight:600">nonce</span>: zufälliger Wert, taucht im ID Token wieder auf (Replay-Schutz)
 
 </div>
 <div>
 
-- <span style="color:#15803d;font-weight:600">code_challenge</span> - `SHA-256(code_verifier)`, wird in Schritt 3 geprüft
-- `code_challenge_method=S256` - gibt den Hash-Algorithmus an
+- <span style="color:#15803d;font-weight:600">code_challenge</span>: `SHA-256(code_verifier)`, wird in Schritt 3 geprüft
+- `code_challenge_method=S256`: gibt den Hash-Algorithmus an
 
 </div>
 </div>
@@ -683,13 +675,13 @@ Location: https://app.example.com/callback
 <div class="grid grid-cols-2 gap-6 mt-6 text-sm">
 <div>
 
-- <span style="color:#1d4ed8;font-weight:600">code</span> - kurzlebiger Authorization Code (~60 Sek., einmalig)
-- Noch **kein Token** - nur ein Einlöseschein
+- <span style="color:#1d4ed8;font-weight:600">code</span>: kurzlebiger Authorization Code (~60 Sek., einmalig)
+- Noch **kein Token**
 
 </div>
 <div>
 
-- <span style="color:#c2410c;font-weight:600">state</span> - muss mit Schritt 1 übereinstimmen (CSRF-Check)
+- <span style="color:#c2410c;font-weight:600">state</span>: muss mit Schritt 1 übereinstimmen (CSRF-Check)
 - Bei Abweichung: **Request verwerfen**
 
 </div>
@@ -719,8 +711,8 @@ grant_type=authorization_code
 <div class="grid grid-cols-2 gap-6 mt-3 text-sm">
 <div>
 
-- <span style="color:#1d4ed8;font-weight:600">code</span> - derselbe Authorization Code aus Schritt 2
-- <span style="color:#15803d;font-weight:600">code_verifier</span> - das Original-Secret
+- <span style="color:#1d4ed8;font-weight:600">code</span>: derselbe Authorization Code aus Schritt 2
+- <span style="color:#15803d;font-weight:600">code_verifier</span>: das Original-Secret
 
 </div>
 <div>
@@ -755,13 +747,13 @@ IdP antwortet mit drei Tokens.
 <div class="grid grid-cols-3 gap-3 mt-3 text-xs">
 <div>
 
-**ID Token** - JWT für die App
+**ID Token**: JWT für die App
 Enthält: `sub`, `name`, `email`
 
 </div>
 <div>
 
-**Access Token** - für APIs
+**Access Token**: für APIs
 Enthält: `scope`, `roles`, `exp`
 
 </div>
@@ -850,7 +842,7 @@ Der Nutzer authentifiziert sich **einmal beim IdP** und ist damit automatisch in
 
 - Keycloak speichert nach dem Login eine **SSO-Session** (serverseitig + Cookie im Browser)
 - Öffnet der Nutzer eine zweite App, erkennt Keycloak die Session → **kein erneuter Login nötig**
-- Logout muss **serverseitig** beim IdP passieren - Token lokal löschen reicht nicht
+- Logout muss **serverseitig** beim IdP passieren
 
 <!--
 SSO ist ein zentrales Argument für einen dedizierten IdP statt app-eigenem Login.
@@ -1032,9 +1024,9 @@ Refresh Token im HttpOnly Cookie + Access Token im Memory ist ein guter Mittelwe
 <div class="grid grid-cols-2 gap-6 mt-4">
 <div>
 
-### Warum Refresh?
+### Warum Refresh Tokens?
 
-Access Tokens sind **kurzlebig** (typisch 5 Minuten). Mit einem Refresh Token kann die App im Hintergrund neue Access Tokens holen - ohne den Nutzer erneut einzuloggen.
+Access Tokens sind **kurzlebig** (typisch 5 Minuten). Mit einem Refresh Token kann die App im Hintergrund neue Access Tokens holen, ohne den Nutzer erneut einzuloggen.
 
 ```http
 POST /realms/demo/protocol/openid-connect/token
@@ -1086,11 +1078,11 @@ iframe-basiertes Silent Renew scheitert an Third-Party-Cookie-Blockierungen mode
 
 ### Was wird geprüft?
 
-- `iss` - Issuer (Keycloak URL + Realm)
-- `aud` - Audience (Client ID oder API)
-- `exp` - Ablaufzeit
-- `nbf` - Not Before
-- **Signatur** - via JWKS Public Key
+- `iss`: Issuer (Keycloak URL + Realm)
+- `aud`: Audience (Client ID oder API)
+- `exp`: Ablaufzeit
+- `nbf`: Not Before
+- **Signatur**: via JWKS Public Key
 
 ### JWKS Endpoint
 
@@ -1145,7 +1137,7 @@ Die Konfiguration ist minimal - nur die issuerUri muss gesetzt werden.
 
 Token aus Memory löschen - **IdP-Session bleibt aktiv**.
 
-→ Nächster Login-Versuch via Silent SSO: User ist sofort wieder eingeloggt, ohne es zu merken.
+→ Nächster Login-Versuch via Silent SSO: User ist sofort wieder eingeloggt.
 
 ### ✅ Client-Initiated Logout
 
@@ -1179,7 +1171,7 @@ Host: keycloak.example.com
 
 # Logout: Front-Channel vs. Back-Channel
 
-<p class="text-sm text-gray-400 mb-6">Szenario: User loggt sich in App A aus - wie erfahren App B und App C davon?</p>
+<p class="text-sm text-gray-400 mb-6">Szenario: User loggt sich in App A aus. Wie erfahren App B und App C davon?</p>
 
 <div class="grid grid-cols-2 gap-5">
 
@@ -1194,7 +1186,7 @@ Host: keycloak.example.com
       <span>&lt;iframe src="https://<span class="text-orange-500">app-d</span>/logout" /&gt;</span>
     </div>
     <div class="rounded-lg bg-orange-50 px-3 py-2 text-xs text-orange-700">
-      ⚠️ Wird von modernen Browsern zunehmend blockiert - heute kaum noch zuverlässig
+      ⚠️ Wird von modernen Browsern zunehmend blockiert
     </div>
   </div>
 </div>
@@ -1206,7 +1198,7 @@ Host: keycloak.example.com
     <div class="text-xs text-gray-400 mb-4">server-to-server · HTTP POST</div>
     <div class="font-mono text-xs bg-gray-50 rounded-lg px-3 py-2 text-gray-500 mb-4">POST /logout<br/>Body: logout_token (signiertes JWT)</div>
     <div class="rounded-lg bg-green-50 px-3 py-2 text-xs text-green-700">
-      ✅ Zuverlässig - empfohlen wenn ein Backend vorhanden ist
+      ✅ Zuverlässig, aber benötigt ein Backend
     </div>
   </div>
 </div>
@@ -1449,12 +1441,8 @@ Keycloak braucht beim ersten Start etwas länger - das Backend wartet automatisc
     <div class="text-red-600 font-bold text-base mb-1">Realm</div>
     <div class="text-xs text-gray-400 font-mono mb-4">test-realm</div>
     <p class="text-sm text-gray-600">
-      Ein <strong>Realm</strong> ist ein isolierter Mandant in Keycloak -
-      mit eigenen Usern, Clients, Rollen und Identity Providern.
-    </p>
-    <p class="text-sm text-gray-500 mt-3">
-      Jeder Realm hat automatisch einen eigenen <strong>Discovery Endpoint</strong>,
-      JWKS und Token-Endpunkt.
+      Ein <strong>Realm</strong> ist ein isolierter Mandant in Keycloak.
+      Jedes Realm hat eigene User, Clients, Rollen und Identity Provider.
     </p>
   </div>
 </div>
@@ -1467,10 +1455,6 @@ Keycloak braucht beim ersten Start etwas länger - das Backend wartet automatisc
     <p class="text-sm text-gray-600">
       Ein <strong>Client</strong> repräsentiert die App, die Tokens anfordert.
     </p>
-    <p class="text-sm text-gray-500 mt-3">
-      Als <strong>public client</strong> ohne Secret - Keycloak erzwingt automatisch PKCE.
-      Redirect URI definiert, wohin nach dem Login zurückgeleitet wird.
-    </p>
   </div>
 </div>
 
@@ -1480,8 +1464,8 @@ Keycloak braucht beim ersten Start etwas länger - das Backend wartet automatisc
     <div class="text-orange-600 font-bold text-base mb-1">Identity Provider</div>
     <div class="text-xs text-gray-400 font-mono mb-4">Google</div>
     <p class="text-sm text-gray-600">
-      Keycloak fungiert als <strong>Broker</strong> zu Google -
-      die App bekommt immer Keycloak-Tokens, egal wo der User sich anmeldet.
+      Keycloak fungiert als <strong>Broker</strong> zu Google.
+      Die App bekommt immer Keycloak-Tokens, egal wo der User sich anmeldet.
     </p>
   </div>
 </div>
@@ -1502,13 +1486,13 @@ Realm = Mandant, Client = App-Registrierung, Identity Provider = externe Login-Q
 
 ### Warum Keycloak als Broker?
 
-Die App bindet sich **einmalig an Keycloak** - nicht an jeden externen Provider.
+Die App bindet sich **einmalig an Keycloak**, nicht an jeden externen Provider.
 Keycloak übernimmt die Komplexität dahinter.
 
 <div class="mt-5 space-y-3">
   <div class="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
     <span class="text-lg">🔄</span>
-    <div class="text-sm"><strong>Token-Übersetzung</strong><br><span class="text-gray-500">Google-Token bleibt intern - die App bekommt immer Keycloak-Tokens</span></div>
+    <div class="text-sm"><strong>Token-Übersetzung</strong><br><span class="text-gray-500">Google-Token bleibt intern. Die App bekommt immer Keycloak-Tokens</span></div>
   </div>
   <div class="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
     <span class="text-lg">🗂️</span>
@@ -1540,8 +1524,7 @@ Browser          Keycloak         Google
 ```
 
 <div class="text-xs text-gray-400 mt-3">
-  Keycloak tauscht den Google-Code selbst gegen Tokens ein -
-  der Browser sieht Google-Tokens nie.
+  Keycloak tauscht den Google-Authorization-Code selbst gegen Tokens ein
 </div>
 
 </div>
