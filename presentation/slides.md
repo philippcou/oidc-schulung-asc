@@ -35,8 +35,9 @@ transition: slide-up
 </div>
 
 <div class="absolute bottom-6 left-0 right-0 flex justify-between px-12" style="font-size: 0.7rem; color: #d1d5db">
-  <span style="font-family: monospace">http://localhost:4200</span>
-  <span>{{ new Date().getFullYear() }}</span>
+  <span></span>
+  <a href="https://github.com/philippcou/oidc-schulung-asc" target="_blank" style="font-family: monospace; color: #d1d5db; text-decoration: none">github.com/philippcou/oidc-schulung-asc</a>
+  <span>2026</span>
 </div>
 
 <style>
@@ -415,7 +416,7 @@ layout: section
 
 Der **Authorization Code Flow** ist der empfohlene OAuth 2.0 Flow für alle Clients, die einen Nutzer authentifizieren müssen.
 
-**Kernprinzip:** Die App bekommt nie direkt ein Token — stattdessen erst einen kurzlebigen **Authorization Code**, der dann gegen Tokens eingetauscht wird.
+**Kernprinzip:** Die App bekommt nie direkt ein Token - stattdessen erst einen kurzlebigen **Authorization Code**, der dann gegen Tokens eingetauscht wird.
 
 <div class="grid grid-cols-2 gap-4 mt-6">
   <div class="rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">
@@ -1825,6 +1826,12 @@ Danke fürs Mitmachen!
 <div class="mt-6 text-sm text-gray-500">
 
 [jwt.io](https://jwt.io) · [Keycloak Docs](https://www.keycloak.org/documentation) · [angular-auth-oidc-client Docs](https://nice-hill-002425310.azurestaticapps.net/docs/intro)
+
+</div>
+
+<div class="mt-4 text-sm font-mono text-gray-500">
+
+[github.com/philippcou/oidc-schulung-asc](https://github.com/philippcou/oidc-schulung-asc)
 
 </div>
 
