@@ -1,0 +1,229 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-center p-6 gap-4">
+  <div class="max-w-3xl w-full mx-auto space-y-4">
+
+    <!-- Login Card -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div class="h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+      <div class="px-12 py-12">
+        <span class="inline-block text-xs font-bold tracking-widest text-indigo-400 uppercase mb-4">OpenID Connect</span>
+        <h1 class="text-4xl font-bold text-gray-800 mb-3">OIDC Demo</h1>
+        <p class="text-gray-500 mb-8 leading-relaxed">
+          Du bist nicht eingeloggt.<br />
+          Klicke auf Login, um dich über Keycloak zu authentifizieren.
+        </p>
+        <button
+          (click)="login()"
+          [disabled]="!keycloakAvailable()"
+          class="font-semibold py-3 px-8 rounded-xl transition disabled:cursor-not-allowed"
+          [class]="keycloakAvailable()
+            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+            : keycloakAvailable() === null
+              ? 'bg-gray-200 text-gray-400'
+              : 'bg-red-50 text-red-300'"
+        >
+          Login mit Keycloak
+        </button>
+      </div>
+    </div>
+
+    <!-- Authorization Code Flow -->
+    @if (keycloakAvailable() !== false) {
+    <div class="bg-white rounded-2xl shadow p-6">
+      <h2 class="font-semibold text-gray-700 mb-1">Authorization Code Flow</h2>
+      <p class="text-xs text-gray-400 mb-6">Was passiert, wenn du auf Login klickst?</p>
+
+      <div class="flex items-start gap-3">
+
+        <!-- Step 1 -->
+        <div class="flex flex-col items-center flex-1">
+          <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm mb-3 shrink-0">1</div>
+          <p class="text-xs font-semibold text-gray-700 text-center">Redirect zu Keycloak</p>
+        </div>
+
+        <div class="pt-4 text-gray-300 text-lg shrink-0">→</div>
+
+        <!-- Step 2 -->
+        <div class="flex flex-col items-center flex-1">
+          <div class="w-9 h-9 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm mb-3 shrink-0">2</div>
+          <p class="text-xs font-semibold text-gray-700 text-center">Login bei Keycloak</p>
+        </div>
+
+        <div class="pt-4 text-gray-300 text-lg shrink-0">→</div>
+
+        <!-- Step 3 -->
+        <div class="flex flex-col items-center flex-1">
+          <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm mb-3 shrink-0">3</div>
+          <p class="text-xs font-semibold text-gray-700 text-center">Authorization Code</p>
+        </div>
+
+        <div class="pt-4 text-gray-300 text-lg shrink-0">→</div>
+
+        <!-- Step 4 -->
+        <div class="flex flex-col items-center flex-1">
+          <div class="w-9 h-9 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-sm mb-3 shrink-0">4</div>
+          <p class="text-xs font-semibold text-gray-700 text-center">Token Exchange</p>
+        </div>
+
+      </div>
+    </div>
+    }
+
+    <!-- Discovery Document -->
+    <details
+      class="bg-white rounded-2xl shadow transition-all duration-500"
+      [class]="realmAvailable() === null
+        ? ''
+        : realmAvailable()
+          ? 'ring-2 ring-green-200'
+          : 'ring-2 ring-red-200'"
+    >
+      <summary class="flex items-center gap-3 p-6 cursor-pointer hover:bg-gray-50 rounded-2xl transition">
+        <div class="flex-1">
+          <h2 class="font-semibold text-gray-700">OpenID Configuration</h2>
+          <p class="text-xs text-gray-400 mt-0.5 font-mono">GET {{ discoveryUrl }}</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-medium shrink-0">
+          @if (realmAvailable() === null) {
+            <span class="w-2 h-2 rounded-full bg-gray-300 animate-pulse"></span>
+            <span class="text-gray-400">prüft…</span>
+          } @else if (realmAvailable()) {
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="text-green-600">200 OK</span>
+          } @else {
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            <span class="text-red-500">nicht vorhanden</span>
+          }
+        </div>
+      </summary>
+
+      <div class="px-6 pb-6 space-y-4">
+        <p class="text-xs text-gray-400 italic">
+          Das Discovery Document beschreibt alle Endpunkte und Fähigkeiten des Identity Providers.
+        </p>
+
+        @if (discoveryError()) {
+          <p class="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{{ discoveryError() }}</p>
+        }
+
+        <!-- Skeleton -->
+        @if (realmAvailable() === null) {
+          <div class="space-y-2 animate-pulse">
+            @for (item of highlightedEndpoints; track item.key) {
+              <div class="h-12 bg-gray-100 rounded-xl"></div>
+            }
+          </div>
+        }
+
+        <!-- Endpoint list -->
+        @if (discoveryDoc(); as doc) {
+          <div class="space-y-2">
+            @for (item of highlightedEndpoints; track item.key) {
+              <div class="rounded-xl bg-gray-50 px-4 py-3">
+                <div class="flex items-baseline justify-between gap-4">
+                  <span class="text-xs font-semibold text-gray-600 shrink-0">{{ item.label }}</span>
+                  <span class="text-xs text-gray-400 italic text-right">{{ item.description }}</span>
+                </div>
+                <p class="text-xs font-mono text-blue-600 mt-1 break-all">{{ doc[item.key] }}</p>
+              </div>
+            }
+          </div>
+
+          <!-- Raw JSON -->
+          <details class="mt-2">
+            <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Vollständiges Discovery Document</summary>
+            <pre class="bg-gray-50 rounded-xl p-4 text-xs overflow-auto mt-2" [innerHTML]="doc | jsonHighlight"></pre>
+          </details>
+        }
+      </div>
+    </details>
+
+    <!-- Arrow connector - nur wenn nicht erreichbar -->
+    @if (keycloakAvailable() === false) {
+      <div class="flex items-center justify-center -mt-1">
+        <svg class="text-red-300" width="20" height="28" viewBox="0 0 20 28" fill="none">
+          <line x1="10" y1="0" x2="10" y2="20" stroke="currentColor" stroke-width="1.5"/>
+          <polyline points="4,14 10,22 16,14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </div>
+    }
+
+    <!-- Keycloak Admin Link -->
+    <div
+      class="bg-white rounded-2xl shadow overflow-hidden transition-all duration-500"
+      [class]="keycloakAvailable() === null ? '' : keycloakAvailable() ? 'ring-2 ring-green-200' : 'ring-2 ring-red-200'"
+    >
+      <a
+        href="http://localhost:8080"
+        target="_blank"
+        rel="noopener"
+        class="flex items-center justify-between px-6 py-4 group transition hover:bg-gray-50"
+      >
+        <div class="flex items-center gap-3">
+          <div class="text-xl">⚙️</div>
+          <div>
+            <p class="text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition">Keycloak Admin Console</p>
+            <p class="text-xs text-gray-400 font-mono">http://localhost:8080</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-gray-400">admin / admin</span>
+          <span class="text-gray-300 group-hover:text-gray-500 transition">→</span>
+        </div>
+      </a>
+
+      <!-- Konfiguration-Checklist -->
+      <div
+        class="border-t px-6 py-4 space-y-2.5 transition-colors duration-500"
+        [class]="keycloakAvailable() === null ? 'border-gray-100' : keycloakAvailable() ? 'border-green-100 bg-green-50' : 'border-red-100'"
+      >
+        <p class="text-xs font-semibold mb-3 transition-colors duration-500"
+           [class]="keycloakAvailable() === null ? 'text-gray-400' : keycloakAvailable() ? 'text-green-600' : 'text-red-500'">
+          {{ keycloakAvailable() ? 'Konfiguration bestätigt' : 'Erwartete Konfiguration' }}
+        </p>
+
+        <!-- Realm -->
+        <div class="flex items-center gap-3">
+          <span class="w-5 h-5 flex items-center justify-center shrink-0">
+            @if (realmAvailable() === null) {
+              <span class="w-3 h-3 rounded-full bg-gray-200 animate-pulse"></span>
+            } @else if (realmAvailable()) {
+              <span class="text-green-500 font-bold text-base leading-none animate-pop-in">✓</span>
+            } @else {
+              <span class="text-red-400 font-bold text-base leading-none animate-pop-in">✗</span>
+            }
+          </span>
+          <span class="w-14 text-xs text-gray-400 shrink-0">Realm</span>
+          <span class="text-sm font-mono font-semibold transition-colors duration-500"
+                [class]="realmAvailable() ? 'text-green-600' : 'text-indigo-600'">test-realm</span>
+        </div>
+
+        <!-- Client -->
+        <div class="flex items-center gap-3">
+          <span class="w-5 h-5 flex items-center justify-center shrink-0">
+            @if (clientExists() === null) {
+              <span class="w-3 h-3 rounded-full bg-gray-200 animate-pulse"></span>
+            } @else if (clientExists()) {
+              <span class="text-green-500 font-bold text-base leading-none animate-pop-in">✓</span>
+            } @else {
+              <span class="text-red-400 font-bold text-base leading-none animate-pop-in">✗</span>
+            }
+          </span>
+          <span class="w-14 text-xs text-gray-400 shrink-0">Client</span>
+          <span class="text-sm font-mono font-semibold transition-colors duration-500"
+                [class]="clientExists() ? 'text-green-600' : 'text-indigo-600'">test-application</span>
+        </div>
+
+        <!-- Flow (static info) -->
+        <div class="flex items-center gap-3">
+          <span class="w-5 h-5 flex items-center justify-center shrink-0">
+            <span class="text-gray-300 text-sm leading-none">-</span>
+          </span>
+          <span class="w-14 text-xs text-gray-400 shrink-0">Flow</span>
+          <span class="text-sm font-mono text-gray-500">Authorization Code + PKCE</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
