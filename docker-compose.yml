@@ -1,0 +1,53 @@
+services:
+
+  keycloak:
+    build:
+      context: ./keycloak
+      dockerfile: Dockerfile
+    container_name: keycloak
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: dev-file
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    command:
+      - start-dev
+      - --import-realm
+      - --http-management-scheme=http
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - |
+          exec 3<>/dev/tcp/127.0.0.1/9000;
+          echo -e "GET /health/ready HTTP/1.1\r\nHost: localhost:9000\r\nConnection: close\r\n\r\n" >&3;
+          if cat <&3 | grep -q "\"status\": \"UP\""; then exit 0; else exit 1; fi
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend-application
+      dockerfile: Dockerfile
+    container_name: oidc-backend
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+    ports:
+      - "8090:8090"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend-application
+      dockerfile: Dockerfile
+    container_name: oidc-frontend
+    ports:
+      - "4200:80"
